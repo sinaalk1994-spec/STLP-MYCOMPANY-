@@ -46,11 +46,15 @@ $aapt = Join-Path $BuildTools 'aapt2.exe'
 Run-Tool $aapt @('compile', '--dir', (Join-Path $projectDir 'app/src/main/res'), '-o', $resources)
 # The Gradle source manifest uses namespace; direct aapt2 linking requires the package attribute.
 $manifest = Get-Content -LiteralPath (Join-Path $projectDir 'app/src/main/AndroidManifest.xml') -Raw
+[xml]$manifestXml = $manifest
+$versionName = $manifestXml.manifest.GetAttribute('versionName', 'http://schemas.android.com/apk/res/android')
+if ($versionName -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid application version.' }
+$apkName = "TehranVolt-$versionName.apk"
 $manifest = $manifest.Replace('<manifest ', '<manifest package="ir.tehbatri.admin" ')
 $buildManifest = Join-Path $buildDir 'AndroidManifest.xml'
 [IO.File]::WriteAllText($buildManifest, $manifest, [Text.UTF8Encoding]::new($false))
 $unsignedApk = Join-Path $buildDir 'unsigned.apk'
-Run-Tool $aapt @('link', '-o', $unsignedApk, '-I', $AndroidJar, '--manifest', $buildManifest, '--min-sdk-version', '26', '--target-sdk-version', '35', $resources)
+Run-Tool $aapt @('link', '-o', $unsignedApk, '-I', $AndroidJar, '--manifest', $buildManifest, '-A', (Join-Path $projectDir 'app/src/main/assets'), '--min-sdk-version', '26', '--target-sdk-version', '35', $resources)
 $classesJar = Join-Path $buildDir 'classes.jar'
 Run-Tool (Join-Path $JavaHome 'bin/jar.exe') @('--create', '--file', $classesJar, '-C', $classDir, '.')
 Run-Tool $java @('-cp', (Join-Path $BuildTools 'lib/d8.jar'), 'com.android.tools.r8.D8', '--release', '--min-api', '26', '--lib', $AndroidJar, '--output', $dexDir, $classesJar)
@@ -78,11 +82,11 @@ if (-not (Test-Path -LiteralPath $keystore)) {
     [IO.File]::WriteAllText($passwordFile, [Convert]::ToBase64String($random), [Text.UTF8Encoding]::new($false))
     Run-Tool (Join-Path $JavaHome 'bin/keytool.exe') @('-genkeypair', '-keystore', $keystore, '-storetype', 'JKS', '-storepass:file', $passwordFile, '-keypass:file', $passwordFile, '-alias', 'tehranvolt', '-keyalg', 'RSA', '-keysize', '3072', '-validity', '10000', '-dname', 'CN=Tehran Volt, O=Tehbatri, C=IR')
 }
-$apk = Join-Path $distDir 'TehranVolt-1.0.0.apk'
+$apk = Join-Path $distDir $apkName
 $signer = Join-Path $BuildTools 'lib/apksigner.jar'
 Run-Tool $java @('-jar', $signer, 'sign', '--ks', $keystore, '--ks-key-alias', 'tehranvolt', '--ks-pass', "file:$passwordFile", '--v4-signing-enabled', 'false', '--out', $apk, $alignedApk)
 Run-Tool $java @('-jar', $signer, 'verify', '--verbose', '--print-certs', $apk)
 Run-Tool (Join-Path $BuildTools 'zipalign.exe') @('-c', '-p', '4', $apk)
 $hash = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToLowerInvariant()
-[IO.File]::WriteAllText((Join-Path $distDir 'SHA256SUMS.txt'), "$hash  TehranVolt-1.0.0.apk`n", [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText((Join-Path $distDir 'SHA256SUMS.txt'), "$hash  $apkName`n", [Text.UTF8Encoding]::new($false))
 Write-Host "APK ready: $apk"

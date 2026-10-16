@@ -47,6 +47,7 @@ import org.json.JSONTokener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -82,6 +84,7 @@ public final class MainActivity extends Activity {
     private boolean rendererGone;
     private boolean pageFailed;
     private String retryUrl = UrlPolicy.HOME;
+    private String adminLayoutScript;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -232,7 +235,10 @@ public final class MainActivity extends Activity {
 
             @Override public void onPageFinished(WebView view, String url) {
                 CookieManager.getInstance().flush();
-                if (!pageFailed && UrlPolicy.isInternal(url)) installBlobBuffer();
+                if (!pageFailed && UrlPolicy.isInternal(url)) {
+                    installBlobBuffer();
+                    installAdminLayoutFix();
+                }
             }
 
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -491,6 +497,23 @@ public final class MainActivity extends Activity {
         } finally {
             if (connection != null) connection.disconnect();
         }
+    }
+
+    private void installAdminLayoutFix() {
+        if (destroyed || rendererGone || !UrlPolicy.isInternal(web.getUrl())) return;
+        if (adminLayoutScript == null) {
+            try (InputStream source = getAssets().open("admin-mobile-fix.js");
+                 ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+                byte[] chunk = new byte[4096];
+                int count;
+                while ((count = source.read(chunk)) != -1) buffer.write(chunk, 0, count);
+                adminLayoutScript = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                toast("اصلاح نمایش موبایل بارگذاری نشد. برنامه را دوباره باز کنید.");
+                return;
+            }
+        }
+        web.evaluateJavascript(adminLayoutScript, null);
     }
 
     /** Keeps only recently created blobs, bounded in size; preserves exports that immediately revoke their URL. */

@@ -2,7 +2,9 @@
 
 اپ اندروید مخصوص مدیران اتحادیه باتری و برق خودرو تهران، متصل به **https://tehbatri.ir/admin**.
 
-**[دانلود فایل نصب اندروید، نسخهٔ ۱.۰.۰](https://github.com/sinaalk1994-spec/STLP-MYCOMPANY-/raw/refs/heads/main/android/dist/TehranVolt-1.0.0.apk)**
+**[دانلود فایل نصب اندروید، نسخهٔ ۱.۰.۱](https://github.com/sinaalk1994-spec/STLP-MYCOMPANY-/raw/refs/heads/main/android/dist/TehranVolt-1.0.1.apk)**
+
+در نسخهٔ ۱.۰.۱ بیرون‌زدن دکمه‌های ویرایش و حذف خبر با متن و وضعیت طولانی اصلاح شده است. فرم‌های بلند هم اسکرول داخلی دارند. فایل جدید با همان امضای قبلی ساخته شده و روی نسخهٔ نصب‌شده به‌روزرسانی می‌شود.
 
 ![آیکون اپ](android/artwork/tehran-volt.png)
 
