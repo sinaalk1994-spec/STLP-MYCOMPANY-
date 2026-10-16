@@ -1,0 +1,17 @@
+{
+  "id": "/admin",
+  "name": "تهران‌ولت",
+  "short_name": "تهران‌ولت",
+  "description": "پنل مدیران اتحادیه باتری و برق خودرو تهران",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#FAF9F6",
+  "icons": [
+    { "src": "/icons/tehran-volt-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/tehran-volt-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
